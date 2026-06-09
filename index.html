@@ -99,8 +99,8 @@
                 </div>
             </div>
 
-            <div class="w-1/2 flex flex-col bg-gray-50">
-                <div class="flex border-b border-gray-200 bg-white">
+            <div class="w-1/2 flex flex-col bg-gray-50 h-full">
+                <div class="flex border-b border-gray-200 bg-white sticky top-0 z-10">
                     <button onclick="switchTab('submit-tab')" id="btn-submit-tab" class="tab-btn active flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
                         Submit Code
                     </button>
@@ -112,20 +112,22 @@
                     </button>
                 </div>
 
-                <div class="flex-1 p-6 overflow-y-auto">
+                <div class="flex-1 p-4 overflow-y-auto h-[calc(100vh-64px)] flex flex-col">
                     
-                    <div id="submit-tab" class="tab-content active h-full flex flex-col">
-                        <div class="mb-4 flex justify-between items-center">
+                    <div id="submit-tab" class="tab-content active h-full flex flex-col flex-1">
+                        <div class="mb-3 flex justify-between items-center flex-shrink-0">
                             <label class="block text-sm font-medium text-gray-700">เลือกภาษาที่ต้องการส่ง:</label>
                             <select id="lang-select" onchange="updateDefaultCode()" class="bg-white border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
                                 <option value="cpp">C++ (G++ 20)</option>
                                 <option value="python">Python 3</option>
                             </select>
                         </div>
-                        <div class="flex-1 min-h-[300px] mb-4">
-                            <textarea id="code-editor" class="w-full h-full p-4 bg-gray-900 text-green-400 font-mono text-sm rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner resize-none" spellcheck="false"></textarea>
+                        
+                        <div class="flex-1 min-h-[500px] md:min-h-[550px] mb-3 relative">
+                            <textarea id="code-editor" class="w-full h-full p-4 bg-gray-900 text-green-400 font-mono text-sm rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner resize-y" spellcheck="false" placeholder="# เขียนโค้ดของคุณที่นี่..."></textarea>
                         </div>
-                        <button onclick="submitCode()" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-700 transition shadow flex items-center justify-center gap-2">
+                        
+                        <button onclick="submitCode()" class="w-full bg-emerald-600 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-emerald-700 transition shadow flex items-center justify-center gap-2 flex-shrink-0 mb-4">
                             <span>ส่งโค้ด (Submit)</span>
                         </button>
                     </div>
@@ -149,7 +151,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="subtask-tbody" class="divide-y divide-gray-200 bg-white text-gray-600 font-medium">
-                                        </tbody>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -170,7 +172,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="submission-tbody" class="divide-y divide-gray-200 bg-white font-mono">
-                                        </tbody>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -202,15 +204,13 @@
 
 
     <script>
-        // ข้อมูลจำลองสำหรับเก็บรายชื่อผู้ใช้ที่เข้ามาส่งโค้ด
+        // ข้อมูลประวัติการส่งโค้ดจำลองในระบบ
         let currentUser = "";
         let submissionHistory = [
-            // Mock Data เริ่มต้นเพื่อความสมจริงแบบเดียวกับเว็บบอร์ดของจริง
             { time: "09 มิ.ย. 2026 15:30", user: "somchai_pro", lang: "C++", score: 100, subtasks: ["P","P","P","P","P"], code: "#include <bits/stdc++.h>\nusing namespace std;\n\n// Sieve of Eratosthenes \nint main() {\n    ios_base::sync_with_stdio(false); cin.tie(NULL);\n    int n; cin >> n;\n    vector<bool> prime(n+1, true);\n    long long sum = 0;\n    for (int p=2; p<=n; p++) {\n        if (prime[p]) {\n            sum += p;\n            for (int i=p*2; i<=n; i+=p) prime[i] = false;\n        }\n    }\n    cout << sum << \"\\n\";\n    return 0;\n}" },
             { time: "09 มิ.ย. 2026 16:12", user: "python_easy", lang: "Python", score: 40, subtasks: ["P","P","T","T","T"], code: "# Unoptimized prime check\nn = int(input())\ns = 0\nfor i in range(2, n+1):\n    is_p = True\n    for j in range(2, int(i**0.5)+1):\n        if i % j == 0:\n            is_p = False; break\n    if is_p: s += i\nprint(s)" }
         ];
 
-        // กำหนดรายละเอียดโครงสร้างของ Subtasks
         const subtaskDetails = [
             { id: 1, range: "2 <= n <= 100", weight: 20 },
             { id: 2, range: "101 <= n <= 1000", weight: 20 },
@@ -219,20 +219,17 @@
             { id: 5, range: "100001 <= n <= 600000", weight: 20 }
         ];
 
-        // โค้ดเริ่มต้นเริ่มต้นตามโจทย์กำหนด
         const initialTemplates = {
             cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    \n}`,
             python: `# เขียนโค้ดของคุณตรงนี้\nimport sys\n`
         };
 
-        // ฟังก์ชันเริ่มระบบเมื่อโหลดหน้าเสร็จ
         window.onload = function() {
             updateDefaultCode();
-            renderSubtaskTable(null, null); // โหลดตารางแบบยังไม่มีคะแนน
+            renderSubtaskTable(null, null); 
             renderSubmissionTable();
         };
 
-        // ระบบ Login ง่ายๆ
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById("username-input").value.trim();
@@ -251,7 +248,6 @@
             document.getElementById("main-page").classList.add("hidden");
         }
 
-        // ระบบเปลี่ยนหน้าต่างขวา (Tab Switching)
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -260,65 +256,93 @@
             document.getElementById('btn-' + tabId).classList.add('active');
         }
 
-        // เปลี่ยนโค้ดเริ่มต้นตามชนิดภาษาที่เลือก
         function updateDefaultCode() {
             const lang = document.getElementById("lang-select").value;
             document.getElementById("code-editor").value = initialTemplates[lang];
         }
 
-        // --- ระบบจำลองเครื่องตรวจจริง (REALISTIC SIMULATION GRADER) ---
-        // ฟังก์ชันนี้จะทำการเช็กคำในโค้ดของคุณเพื่อประเมินความเร็วในการทำงาน (เสมือนผ่าน Time Limit 1 วิ)
+        // --- ระบบจำลองเครื่องตรวจจริง (REAL SIMULATION GRADER) ---
+        // ปรับปรุงใหม่: ตรวจจับโค้ดมั่วและพ่นคำกวนๆ ออกมา (เช่น cout hello world) จะแจก 0 และ Wrong Answer ทันที!
         function submitCode() {
             const code = document.getElementById("code-editor").value;
             const lang = document.getElementById("lang-select").value;
             
-            // เปลี่ยนหน้าไปแท็บเทสเคสเพื่อดูการประมวลผล
             switchTab('testcase-tab');
             document.getElementById("total-score-text").innerText = "ตรวจคำตอบ...";
             
             setTimeout(() => {
-                let results = ["T", "T", "T", "T", "T"]; // T หมายถึง Time Limit Exceeded (รันเกิน 1 วินาที)
+                let results = ["W", "W", "W", "W", "W"]; // เริ่มต้นให้ Wrong Answer (W) 0 คะแนนก่อน
+                let isCorrectLogic = false;
                 
-                // ตรวจด้วยระบบ Keyword Heuristic อิงตามอัลกอริทึมจริง
-                if (lang === "cpp") {
-                    // ลอจิกสำหรับ C++: ถ้ามี Sieve of Eratosthenes หรือข้ามเลขคู่จะไวพอผ่านลูปใหญ่
-                    if (code.includes("vector<bool>") || code.includes("bool") && (code.includes("+=") || code.includes("j+=i"))) {
-                        results = ["P", "P", "P", "P", "P"]; // ผ่านครบหมด (Perfect)
-                    } else if (code.includes("sqrt") || code.includes("*i") || code.includes("i*i")) {
-                        results = ["P", "P", "P", "T", "T"]; // ผ่านแค่ Subtask 1-3 (เกิน 10,000 จะเริ่มช้าเกิน 1 วิ)
-                    } else {
-                        results = ["P", "P", "T", "T", "T"]; // ช้ามาก ได้แค่ Subtask 1-2
+                // คัดกรองเบื้องต้น: ต้องมีการรับข้อมูลคอมพิวเตอร์และมีลูปคิดเลขจริง ไม่ใช่พ่น Hello World ปลอมๆ
+                if ((code.includes("cin >>") || code.includes("input(")) && 
+                    (code.includes("for") || code.includes("while")) && 
+                    !code.includes("Hello world") && !code.includes("hello")) {
+                    isCorrectLogic = true;
+                }
+                
+                // ตรวจประเมิน Algorithm Complexity ถ้าผ่านเงื่อนไขตรรกะจริง
+                if (isCorrectLogic) {
+                    if (lang === "cpp") {
+                        if (code.includes("vector<bool>") || (code.includes("bool") && code.includes("p*p")) || (code.includes("bool") && code.includes("j+=i"))) {
+                            results = ["P", "P", "P", "P", "P"]; // 100 คะแนนเต็ม (ใช้วิธี Sieve ความเร็วเหมาะสม)
+                        } 
+                        else if (code.includes("sqrt") || code.includes("i*i")) {
+                            results = ["P", "P", "P", "T", "T"]; // 60 คะแนน (ติด Time Limit Subtask ใหญ่)
+                        } else {
+                            results = ["P", "P", "T", "T", "T"]; // 40 คะแนน (ลูปช้ามากเกินขอบเขตข้อหลัง)
+                        }
+                    } else if (lang === "python") {
+                        if (code.includes("range") && code.includes("True")) {
+                            results = ["P", "P", "P", "P", "T"]; // 80 คะแนน (ติดข้อสุดท้ายเนื่องจากสปีดภาษา)
+                        } else if (code.includes("0.5") || code.includes("sqrt")) {
+                            results = ["P", "P", "T", "T", "T"]; // 40 คะแนน
+                        } else {
+                            results = ["P", "T", "T", "T", "T"]; // 20 คะแนน
+                        }
                     }
-                } else if (lang === "python") {
-                    // ลอจิกสำหรับ Python: เนื่องจากไพทอนทำงานช้ากว่า การใช้ลูปธรรมดา n=600000 จะติด TLE แน่นอนเว้นแต่จะเขียนดีมากๆ
-                    if (code.includes("set(") || code.includes("range") && code.includes("True")) {
-                        results = ["P", "P", "P", "P", "T"]; // ข้อจำกัดของภาษา Python มักจะติดขอบเขตสูงสุดใน 1 วินาที
-                    } else if (code.includes("int(") || code.includes("0.5")) {
-                        results = ["P", "P", "P", "T", "T"]; 
-                    } else {
-                        results = ["P", "T", "T", "T", "T"];
-                    }
+                } else {
+                    results = ["W", "W", "W", "W", "W"]; // โค้ดส่งมั่ว ปรับ Wrong Answer ทั้งแผง!
                 }
 
-                // คำนวณคะแนนตามผลลัพธ์ย่อย
                 let totalScore = 0;
-                let subtaskStatusArray = [];
                 for(let i=0; i<5; i++) {
                     if(results[i] === "P") {
                         totalScore += 20;
-                        subtaskStatusArray.push("Pass (20/20)");
-                    } else {
-                        subtaskStatusArray.push("TLE (0/20)");
                     }
                 }
 
-                // อัปเดตการแสดงผลในหน้าเว็บ
                 document.getElementById("total-score-text").innerText = totalScore + " / 100";
-                document.getElementById("total-score-text").className = "text-3xl font-black " + (totalScore === 100 ? "text-emerald-600" : "text-amber-500");
+                document.getElementById("total-score-text").className = "text-3xl font-black " + (totalScore === 100 ? "text-emerald-600" : totalScore > 0 ? "text-amber-500" : "text-red-500");
                 
-                renderSubtaskTable(results, subtaskStatusArray);
+                // อัปเดตวาดตารางผลคะแนน Subtask ใหม่
+                const tbody = document.getElementById("subtask-tbody");
+                tbody.innerHTML = "";
+                subtaskDetails.forEach((sub, idx) => {
+                    let statusHtml = "";
+                    let scoreHtml = "";
+                    
+                    if(results[idx] === "P") {
+                        statusHtml = `<span class="text-emerald-600 font-bold">● Pass</span>`;
+                        scoreHtml = `<span class="text-emerald-600">20</span>`;
+                    } else if(results[idx] === "T") {
+                        statusHtml = `<span class="text-amber-500 font-bold">■ Time Limit Exceeded</span>`;
+                        scoreHtml = `<span class="text-amber-500">0</span>`;
+                    } else {
+                        statusHtml = `<span class="text-red-500 font-bold">X Wrong Answer</span>`;
+                        scoreHtml = `<span class="text-red-500">0</span>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="px-4 py-3 border-b">Subtask ${sub.id}</td>
+                            <td class="px-4 py-3 border-b font-mono text-xs">${sub.range}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold">${scoreHtml} / ${sub.weight}</td>
+                            <td class="px-4 py-3 border-b text-center text-xs">${statusHtml}</td>
+                        </tr>
+                    `;
+                });
                 
-                // นำประวัติบันทึกลงสู่ตาราง Submission (เป็นประวัติแบบเรียลไทม์)
                 const now = new Date();
                 const timeStr = now.toLocaleDateString('th-TH') + " " + now.toTimeString().substring(0,5);
                 
@@ -333,10 +357,9 @@
                 
                 renderSubmissionTable();
 
-            }, 1200); // จำลองว่าใช้เวลาประมวลผลผลลัพธ์เว็บ 1.2 วินาที
+            }, 1200);
         }
 
-        // วาดตาราง Subtask
         function renderSubtaskTable(results, statuses) {
             const tbody = document.getElementById("subtask-tbody");
             tbody.innerHTML = "";
@@ -349,8 +372,11 @@
                     if(results[idx] === "P") {
                         statusHtml = `<span class="text-emerald-600 font-bold">● Pass</span>`;
                         scoreHtml = `<span class="text-emerald-600">20</span>`;
+                    } else if(results[idx] === "T") {
+                        statusHtml = `<span class="text-amber-500 font-bold">■ Time Limit Exceeded</span>`;
+                        scoreHtml = `<span class="text-amber-500">0</span>`;
                     } else {
-                        statusHtml = `<span class="text-red-500 font-bold">■ Time Limit Exceeded</span>`;
+                        statusHtml = `<span class="text-red-500 font-bold">X Wrong Answer</span>`;
                         scoreHtml = `<span class="text-red-500">0</span>`;
                     }
                 }
@@ -366,19 +392,18 @@
             });
         }
 
-        // วาดตาราง Submission ประวัติทั้งหมด
         function renderSubmissionTable() {
             const tbody = document.getElementById("submission-tbody");
             tbody.innerHTML = "";
 
             submissionHistory.forEach((item, index) => {
-                // สร้างหน้าตาสัญลักษณ์ผลลัพธ์ย่อย (เช่น PPPPPT หรือ PPPPP)
                 let subtasksDisplay = item.subtasks.map(s => {
                     if(s === "P") return `<span class="text-emerald-600 font-bold">P</span>`;
-                    return `<span class="text-red-500 font-bold">T</span>`;
+                    if(s === "T") return `<span class="text-amber-500 font-bold">T</span>`;
+                    return `<span class="text-red-500 font-bold">W</span>`;
                 }).join("");
 
-                let scoreClass = item.score === 100 ? "text-emerald-600 font-bold" : "text-amber-600 font-bold";
+                let scoreClass = item.score === 100 ? "text-emerald-600 font-bold" : item.score > 0 ? "text-amber-600 font-bold" : "text-red-500 font-bold";
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition">
@@ -394,16 +419,12 @@
             });
         }
 
-        // เปิด Modal ส่องดูซอร์สโค้ดแบบเดียวกับเว็บจริง
         function viewSourceCode(index) {
             const data = submissionHistory[index];
             document.getElementById("modal-username").innerText = data.user;
             document.getElementById("modal-lang").innerText = data.lang;
             document.getElementById("modal-subtask-status").innerText = data.subtasks.join("");
-            
-            // ป้องกันการแฮ็กแทรกแท็ก HTML ด้วยการจัดระเบียบ Text
             document.getElementById("modal-code-display").innerText = data.code;
-            
             document.getElementById("code-modal").classList.remove("hidden");
         }
 
