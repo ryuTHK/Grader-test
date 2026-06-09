@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
+<!DOCTYPE html><html lang="th"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sumprimes - Programming Grader</title>
@@ -10,9 +8,7 @@
         .tab-content.active { display: block; }
         .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: bold; }
         #code-editor { height: 500px; }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen font-sans">
+    </style></head><body class="bg-gray-100 min-h-screen font-sans">
 
     <div id="login-page" class="flex items-center justify-center min-h-screen bg-gray-900">
         <div class="bg-white p-8 rounded-lg shadow-xl w-96">
@@ -210,7 +206,6 @@
             { id: 5, range: "100001 <= n <= 600000", weight: 20 }
         ];
 
-        // เคลียร์โค้ดเฉลยออกทั้งหมด เหลือโครงสร้างเริ่มต้นสะอาดๆ
         const initialTemplates = {
             cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // เขียนโค้ดหาผลรวมจำนวนเฉพาะที่นี่\n    \n    return 0;\n}`,
             python: `# เขียนโค้ดของคุณตรงนี้\nimport sys\n`
@@ -285,14 +280,11 @@
             document.getElementById("code-editor").value = initialTemplates[lang];
         }
 
-        // --- ระบบคัดกรอง Compilation Error และตรวจ Subtask แบบเข้มงวด ---
         function checkCompilationError(code, lang) {
             if (lang === "cpp") {
-                // เช็กคำสั่งพังๆ หรือ Syntax ที่สะกดผิดยอดฮิต เช่น coutt, cin n, หรือลืมปีกกา/เซมิโคลอนหลักๆ
                 if (code.includes("coutt") || code.includes("cinn") || code.includes("vvector") || code.includes("intt")) {
                     return true;
                 }
-                // ถ้าไม่มีฟังก์ชันหลัก หรือลืมปิดฟังก์ชัน
                 if (!code.includes("main") || !code.includes("{") || !code.includes("}")) {
                     return true;
                 }
@@ -302,6 +294,51 @@
                 }
             }
             return false;
+        }
+
+        // --- ระบบสแกนพฤติกรรมขี้โกง (Anti-Hardcode & Logic Verification) ---
+        function evalGradingLogic(code, lang) {
+            let results = ["-", "-", "-", "-", "-"];
+            const cleanCode = code.replace(/\s+/g, ''); // ยุบ Space ออกให้หมดเพื่อตรวจเช็กง่ายขึ้น
+
+            if (lang === "cpp") {
+                // ดักมุกดื้อๆ: มีคำสั่งพิมพ์คำตอบ แต่ในโค้ดไม่มีลูป 'for' หรือ 'while' เลย ปัดเป็น Wrong Answer ทันที!
+                if (!code.includes("for") && !code.includes("while")) {
+                    return ["-", "-", "-", "-", "-"];
+                }
+                
+                // ดักมุกยอดฮิต: cout << 0; หรือ พ่นเลขตัวเดียวดื้อๆ
+                if (cleanCode.includes("cout<<0") || cleanCode.includes("cout<<1") || cleanCode.includes("printf(\"0\"") || cleanCode.includes("printf(\"1\"")) {
+                    return ["-", "-", "-", "-", "-"];
+                }
+
+                // วิเคราะห์ระดับความเร็วของอัลกอริทึม
+                if (code.includes("vector<bool>") && (code.includes("+=") || code.includes("j+=i"))) {
+                    results = ["P", "P", "P", "P", "P"]; // Sieve of Eratosthenes ผ่านหมดชัวร์ 100 เต็ม
+                } else if (code.includes("sqrt") || code.includes("i*i")) {
+                    results = ["P", "P", "P", "T", "T"]; // ลูปเช็กจำนวนเฉพาะแบบธรรมดา บล็อกเคสใหญ่ด้วย TLE
+                } else if (code.includes("cout") || code.includes("printf")) {
+                    results = ["P", "T", "T", "T", "T"]; // มีการ Print แต่อัลกอริทึมช้าจัด ได้แค่ Subtask แรก
+                }
+
+            } else if (lang === "python") {
+                // สำหรับ Python ถ้าไม่มีคำสั่งวนลูปก็ปัดตกเหมือนกัน
+                if (!code.includes("for") && !code.includes("while")) {
+                    return ["-", "-", "-", "-", "-"];
+                }
+
+                // ดักพวก print(0) หรือ print(1) 
+                if (cleanCode.includes("print(0)") || cleanCode.includes("print(1)")) {
+                    return ["-", "-", "-", "-", "-"];
+                }
+
+                if (code.includes("range") && code.includes("True")) {
+                    results = ["P", "P", "P", "P", "T"]; // Python เพียวๆ มักพัง TLE ที่ขอบเขต 600,000
+                } else if (code.includes("print")) {
+                    results = ["P", "T", "T", "T", "T"];
+                }
+            }
+            return results;
         }
 
         function submitCode() {
@@ -316,33 +353,13 @@
                 let isCompilationError = checkCompilationError(code, lang);
 
                 if (isCompilationError) {
-                    // หากเจอบั๊ก Syntax หรือสะกดผิด จะได้ 0 คะแนนทันที ทุก Subtask ขึ้นเป็น C (Compilation Error)
                     results = ["C", "C", "C", "C", "C"];
                     document.getElementById("total-score-text").innerText = "0 / 100 (Compilation Error)";
                     document.getElementById("total-score-text").className = "text-3xl font-black text-red-600";
-                    
                     renderSubtaskTable(results, null);
                 } else {
-                    // กรณีผ่านการ Compile -> ทำการประเมิน Logic จริง
-                    if (lang === "cpp") {
-                        if (code.includes("vector<bool>") && (code.includes("+=") || code.includes("j+=i"))) {
-                            results = ["P", "P", "P", "P", "P"]; // ผ่านหมดด้วย Sieve แบบไว
-                        } else if (code.includes("sqrt") || code.includes("i*i")) {
-                            results = ["P", "P", "P", "T", "T"]; // ช้าเกินขอบเขตใหญ่ (Time Limit Exceeded)
-                        } else if (code.includes("cout <<") || code.includes("printf")) {
-                            results = ["P", "T", "T", "T", "T"]; // มีการแสดงผล แต่ Logic ไม่ดีพอสำหรับเคสใหญ่
-                        } else {
-                            results = ["-", "-", "-", "-", "-"]; // เคสพ่นค่าว่างหรือโค้ดเปล่า ได้ 0
-                        }
-                    } else if (lang === "python") {
-                        if (code.includes("range") && code.includes("True")) {
-                            results = ["P", "P", "P", "P", "T"]; // Python มักติด TLE ที่ subtask สุดท้าย
-                        } else if (code.includes("print")) {
-                            results = ["P", "T", "T", "T", "T"];
-                        } else {
-                            results = ["-", "-", "-", "-", "-"];
-                        }
-                    }
+                    // เรียกใช้งานระบบตรวจแบบ Anti-Cheat
+                    results = evalGradingLogic(code, lang);
 
                     let totalScore = 0;
                     for(let i=0; i<5; i++) {
@@ -355,12 +372,10 @@
                     renderSubtaskTable(results, null);
                 }
                 
-                // บันทึกประวัติลงตาราง
                 const now = new Date();
                 const timeStr = now.toLocaleDateString('th-TH') + " " + now.toTimeString().substring(0,5);
                 
-                let scoreText = isCompilationError ? "0 (CE)" : "0";
-                let finalScore = isCompilationError ? 0 : 0;
+                let finalScore = 0;
                 for(let i=0; i<5; i++) { if(results[i] === "P") finalScore += 20; }
                 
                 submissionHistory.unshift({
@@ -456,6 +471,4 @@
         function closeModal() {
             document.getElementById("code-modal").classList.add("hidden");
         }
-    </script>
-</body>
-</html>
+    </script></body></html>
