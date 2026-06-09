@@ -9,10 +9,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: bold; }
-        /* Style for the code editor textarea */
-        #code-editor {
-            height: 500px; /* Specific height for balance with problem description */
-        }
+        #code-editor { height: 500px; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -113,15 +110,9 @@
 
             <div class="w-1/2 flex flex-col bg-gray-50">
                 <div class="flex border-b border-gray-200 bg-white">
-                    <button onclick="switchTab('submit-tab')" id="btn-submit-tab" class="tab-btn active flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
-                        Submit Code
-                    </button>
-                    <button onclick="switchTab('testcase-tab')" id="btn-testcase-tab" class="tab-btn flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
-                        Test Case
-                    </button>
-                    <button onclick="switchTab('submission-tab')" id="btn-submission-tab" class="tab-btn flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
-                        Submission
-                    </button>
+                    <button onclick="switchTab('submit-tab')" id="btn-submit-tab" class="tab-btn active flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">Submit Code</button>
+                    <button onclick="switchTab('testcase-tab')" id="btn-testcase-tab" class="tab-btn flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">Test Case</button>
+                    <button onclick="switchTab('submission-tab')" id="btn-submission-tab" class="tab-btn flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">Submission</button>
                 </div>
 
                 <div class="flex-1 p-6 overflow-y-auto">
@@ -168,7 +159,8 @@
                     <div id="submission-tab" class="tab-content">
                         <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                             <h3 class="text-lg font-bold text-gray-800 mb-4">ประวัติการส่งโค้ดทั้งหมดในระบบ</h3>
-                            <div class="overflow-x-auto min-h-[400px]"> <table class="min-w-full divide-y divide-gray-200 text-xs">
+                            <div class="overflow-x-auto min-h-[400px]">
+                                <table class="min-w-full divide-y divide-gray-200 text-xs">
                                     <thead class="bg-gray-50 font-bold text-gray-700 uppercase tracking-wider">
                                         <tr>
                                             <th class="px-3 py-3 text-left">เวลาที่ส่ง</th>
@@ -183,7 +175,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -194,7 +185,7 @@
             <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
                 <div>
                     <h3 class="text-lg font-bold text-gray-800">Source Code ของ <span id="modal-username" class="text-blue-600"></span></h3>
-                    <p class="text-xs text-gray-500 mt-0.5">ภาษา: <span id="modal-lang"></span> | คะแนนย่อย: <span id="modal-subtask-status"></span></p>
+                    <p class="text-xs text-gray-500 mt-0.5">ภาษา: <span id="modal-lang"></span> | ผลลัพธ์: <span id="modal-subtask-status"></span></p>
                 </div>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold px-2">&times;</button>
             </div>
@@ -208,9 +199,7 @@
     </div>
 
     <script>
-        // --- ระบบจำลองข้อมูลเสร็จสิ้น ---
         let currentUser = "";
-        // ตาราง Submission ตอนนี้จะว่างเปล่า (ลบ somchaipro และ python_easy)
         let submissionHistory = [];
 
         const subtaskDetails = [
@@ -221,23 +210,19 @@
             { id: 5, range: "100001 <= n <= 600000", weight: 20 }
         ];
 
-        // ตัวอย่างโค้ด C++ ที่เพิ่มเข้ามาให้พื้นที่เต็ม
-        const cppTemplateDetails = `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    long long n;\n    cin >> n;\n    // Example logic for finding sum of primes up to n\n    // Using Sieve of Eratosthenes\n    vector<bool> is_prime(n + 1, true);\n    long long sum = 0;\n    for (int p = 2; p <= n; p++) {\n        if (is_prime[p]) {\n            sum += p;\n            for (int i = p * 2; i <= n; i += p)\n                is_prime[i] = false;\n        }\n    }\n    cout << sum << endl;\n    return 0;\n}`;
-
+        // เคลียร์โค้ดเฉลยออกทั้งหมด เหลือโครงสร้างเริ่มต้นสะอาดๆ
         const initialTemplates = {
-            cpp: cppTemplateDetails, // โค้ดตัวอย่างใหม่
+            cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // เขียนโค้ดหาผลรวมจำนวนเฉพาะที่นี่\n    \n    return 0;\n}`,
             python: `# เขียนโค้ดของคุณตรงนี้\nimport sys\n`
         };
 
-        // --- ระบบเริ่มระบบเมื่อโหลดหน้าเสร็จ ---
         window.onload = function() {
-            loadSavedSession(); // โหลดสถานะที่บันทึกไว้
+            loadSavedSession();
             updateDefaultCode();
             renderSubtaskTable(null, null);
             renderSubmissionTable();
         };
 
-        // --- ระบบ Login (พร้อมรักษาหน้าสถานะ Save) ---
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById("username-input").value.trim();
@@ -246,7 +231,7 @@
                 document.getElementById("current-user").innerText = user;
                 document.getElementById("login-page").classList.add("hidden");
                 document.getElementById("main-page").classList.remove("hidden");
-                updateSaveStatus("unsaved"); // เปลี่ยนสถานะเป็นยังไม่ได้บันทึก
+                updateSaveStatus("unsaved");
             }
         }
 
@@ -255,14 +240,12 @@
             document.getElementById("username-input").value = "";
             document.getElementById("login-page").classList.remove("hidden");
             document.getElementById("main-page").classList.add("hidden");
-            // ไม่ต้องเคลียร์สถานะ Save ที่บันทึกไว้
         }
 
-        // --- ระบบรักษาสถานะ Save (Session Management) ---
         function saveSession() {
             if(!currentUser) return;
-            localStorage.setItem("progGrader_user", currentUser); // บันทึกชื่อผู้ใช้
-            updateSaveStatus("saved"); // อัปเดต UI ว่าบันทึกแล้ว
+            localStorage.setItem("progGrader_user", currentUser);
+            updateSaveStatus("saved");
         }
 
         function loadSavedSession() {
@@ -272,30 +255,27 @@
                 document.getElementById("current-user").innerText = savedUser;
                 document.getElementById("login-page").classList.add("hidden");
                 document.getElementById("main-page").classList.remove("hidden");
-                updateSaveStatus("saved"); // อัปเดต UI ว่าบันทึกแล้ว
+                updateSaveStatus("saved");
             }
         }
 
-        // อัปเดต UI ของสถานะบันทึก
         function updateSaveStatus(status) {
             const saveText = document.getElementById("save-text");
             const saveBtn = document.getElementById("save-btn");
             if(status === "saved") {
                 saveText.innerText = "บันทึกแล้ว";
                 saveText.className = "font-medium text-emerald-400";
-                saveBtn.classList.add("hidden"); // ซ่อนปุ่มเมื่อบันทึกแล้ว
+                saveBtn.classList.add("hidden");
             } else {
                 saveText.innerText = "ยังไม่ได้บันทึก";
                 saveText.className = "font-medium text-gray-300";
-                saveBtn.classList.remove("hidden"); // แสดงปุ่มเพื่อให้บันทึก
+                saveBtn.classList.remove("hidden");
             }
         }
 
-        // --- ระบบแท็บและการแสดงผล (ยังคงเดิม) ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             document.getElementById('btn-' + tabId).classList.add('active');
         }
@@ -303,6 +283,25 @@
         function updateDefaultCode() {
             const lang = document.getElementById("lang-select").value;
             document.getElementById("code-editor").value = initialTemplates[lang];
+        }
+
+        // --- ระบบคัดกรอง Compilation Error และตรวจ Subtask แบบเข้มงวด ---
+        function checkCompilationError(code, lang) {
+            if (lang === "cpp") {
+                // เช็กคำสั่งพังๆ หรือ Syntax ที่สะกดผิดยอดฮิต เช่น coutt, cin n, หรือลืมปีกกา/เซมิโคลอนหลักๆ
+                if (code.includes("coutt") || code.includes("cinn") || code.includes("vvector") || code.includes("intt")) {
+                    return true;
+                }
+                // ถ้าไม่มีฟังก์ชันหลัก หรือลืมปิดฟังก์ชัน
+                if (!code.includes("main") || !code.includes("{") || !code.includes("}")) {
+                    return true;
+                }
+            } else if (lang === "python") {
+                if (code.includes("printt") || code.includes("inputt") || code.includes("forr ") || code.includes("iff ")) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         function submitCode() {
@@ -313,56 +312,68 @@
             document.getElementById("total-score-text").innerText = "กำลังตรวจคำตอบ...";
             
             setTimeout(() => {
-                let results = ["T", "T", "T", "T", "T"];
-                
-                if (lang === "cpp") {
-                    if (code.includes("vector<bool>") || (code.includes("bool") && (code.includes("+=") || code.includes("j+=i")))) {
-                        results = ["P", "P", "P", "P", "P"];
-                    } else if (code.includes("sqrt") || code.includes("*i") || code.includes("i*i")) {
-                        results = ["P", "P", "P", "T", "T"];
-                    } else {
-                        results = ["P", "P", "T", "T", "T"];
-                    }
-                } else if (lang === "python") {
-                    if (code.includes("set(") || (code.includes("range") && code.includes("True"))) {
-                        results = ["P", "P", "P", "P", "T"];
-                    } else if (code.includes("int(") || code.includes("0.5")) {
-                        results = ["P", "P", "P", "T", "T"];
-                    } else {
-                        results = ["P", "T", "T", "T", "T"];
-                    }
-                }
+                let results = [];
+                let isCompilationError = checkCompilationError(code, lang);
 
-                let totalScore = 0;
-                let subtaskStatusArray = [];
-                for(let i=0; i<5; i++) {
-                    if(results[i] === "P") {
-                        totalScore += 20;
-                        subtaskStatusArray.push("Pass (20/20)");
-                    } else {
-                        subtaskStatusArray.push("TLE (0/20)");
+                if (isCompilationError) {
+                    // หากเจอบั๊ก Syntax หรือสะกดผิด จะได้ 0 คะแนนทันที ทุก Subtask ขึ้นเป็น C (Compilation Error)
+                    results = ["C", "C", "C", "C", "C"];
+                    document.getElementById("total-score-text").innerText = "0 / 100 (Compilation Error)";
+                    document.getElementById("total-score-text").className = "text-3xl font-black text-red-600";
+                    
+                    renderSubtaskTable(results, null);
+                } else {
+                    // กรณีผ่านการ Compile -> ทำการประเมิน Logic จริง
+                    if (lang === "cpp") {
+                        if (code.includes("vector<bool>") && (code.includes("+=") || code.includes("j+=i"))) {
+                            results = ["P", "P", "P", "P", "P"]; // ผ่านหมดด้วย Sieve แบบไว
+                        } else if (code.includes("sqrt") || code.includes("i*i")) {
+                            results = ["P", "P", "P", "T", "T"]; // ช้าเกินขอบเขตใหญ่ (Time Limit Exceeded)
+                        } else if (code.includes("cout <<") || code.includes("printf")) {
+                            results = ["P", "T", "T", "T", "T"]; // มีการแสดงผล แต่ Logic ไม่ดีพอสำหรับเคสใหญ่
+                        } else {
+                            results = ["-", "-", "-", "-", "-"]; // เคสพ่นค่าว่างหรือโค้ดเปล่า ได้ 0
+                        }
+                    } else if (lang === "python") {
+                        if (code.includes("range") && code.includes("True")) {
+                            results = ["P", "P", "P", "P", "T"]; // Python มักติด TLE ที่ subtask สุดท้าย
+                        } else if (code.includes("print")) {
+                            results = ["P", "T", "T", "T", "T"];
+                        } else {
+                            results = ["-", "-", "-", "-", "-"];
+                        }
                     }
-                }
 
-                document.getElementById("total-score-text").innerText = totalScore + " / 100";
-                document.getElementById("total-score-text").className = "text-3xl font-black " + (totalScore === 100 ? "text-emerald-600" : "text-amber-500");
+                    let totalScore = 0;
+                    for(let i=0; i<5; i++) {
+                        if(results[i] === "P") totalScore += 20;
+                    }
+
+                    document.getElementById("total-score-text").innerText = totalScore + " / 100";
+                    document.getElementById("total-score-text").className = "text-3xl font-black " + (totalScore === 100 ? "text-emerald-600" : totalScore > 0 ? "text-amber-500" : "text-red-500");
+                    
+                    renderSubtaskTable(results, null);
+                }
                 
-                renderSubtaskTable(results, subtaskStatusArray);
-                
+                // บันทึกประวัติลงตาราง
                 const now = new Date();
                 const timeStr = now.toLocaleDateString('th-TH') + " " + now.toTimeString().substring(0,5);
+                
+                let scoreText = isCompilationError ? "0 (CE)" : "0";
+                let finalScore = isCompilationError ? 0 : 0;
+                for(let i=0; i<5; i++) { if(results[i] === "P") finalScore += 20; }
                 
                 submissionHistory.unshift({
                     time: timeStr,
                     user: currentUser,
                     lang: lang === "cpp" ? "C++" : "Python",
-                    score: totalScore,
+                    score: isCompilationError ? "CE" : finalScore,
                     subtasks: results,
                     code: code
                 });
                 
                 renderSubmissionTable();
-            }, 1200);
+            }, 1000);
         }
 
         function renderSubtaskTable(results, statuses) {
@@ -377,8 +388,14 @@
                     if(results[idx] === "P") {
                         statusHtml = `<span class="text-emerald-600 font-bold">● Pass</span>`;
                         scoreHtml = `<span class="text-emerald-600">20</span>`;
+                    } else if(results[idx] === "C") {
+                        statusHtml = `<span class="text-red-600 font-bold">✕ Compilation Error</span>`;
+                        scoreHtml = `<span class="text-red-600">0</span>`;
+                    } else if(results[idx] === "T") {
+                        statusHtml = `<span class="text-amber-500 font-bold">■ Time Limit Exceeded</span>`;
+                        scoreHtml = `<span class="text-red-500">0</span>`;
                     } else {
-                        statusHtml = `<span class="text-red-500 font-bold">■ Time Limit Exceeded</span>`;
+                        statusHtml = `<span class="text-red-500 font-bold font-mono">✕ Wrong Answer</span>`;
                         scoreHtml = `<span class="text-red-500">0</span>`;
                     }
                 }
@@ -399,7 +416,6 @@
             tbody.innerHTML = "";
 
             if (submissionHistory.length === 0) {
-                // หากไม่มีประวัติ แสดงแถวว่างเปล่า
                 tbody.innerHTML = `<tr><td colspan="5" class="px-3 py-6 border-b text-center text-gray-400 text-xs italic">ไม่มีประวัติการส่งโค้ด</td></tr>`;
                 return;
             }
@@ -407,10 +423,12 @@
             submissionHistory.forEach((item, index) => {
                 let subtasksDisplay = item.subtasks.map(s => {
                     if(s === "P") return `<span class="text-emerald-600 font-bold">P</span>`;
-                    return `<span class="text-red-500 font-bold">T</span>`;
+                    if(s === "C") return `<span class="text-red-600 font-bold">C</span>`;
+                    if(s === "T") return `<span class="text-amber-500 font-bold">T</span>`;
+                    return `<span class="text-red-500 font-bold">-</span>`;
                 }).join("");
 
-                let scoreClass = item.score === 100 ? "text-emerald-600 font-bold" : "text-amber-600 font-bold";
+                let scoreClass = item.score === 100 ? "text-emerald-600 font-bold" : item.score === "CE" ? "text-red-600 font-bold" : "text-amber-600 font-bold";
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition">
